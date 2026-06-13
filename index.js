@@ -9,7 +9,7 @@ require('dotenv').config();
 app.use(cors());
 app.use(express.json());
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 app.get('/', (req, res) => {
     res.send('Hello World!')
@@ -64,7 +64,22 @@ async function run() {
 
 
         // Company Related Apis
-        app.get('api/my/companies', async (req, res) => {
+        app.get('/api/companies' , async (req, res) => {
+            const cursor = companyCollection.find();
+            const result = await cursor.toArray();
+            res.send(result)
+        })
+
+        app.get('/api/jobs/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {
+                _id: new ObjectId(id)
+            }
+            const result = await jobCollection.findOne(query);
+            res.send(result);
+        })
+
+        app.get('/api/my/companies', async (req, res) => {
             const query = {};
             if(req.query.recruiterId){
                 query.recruiterId = req.query.recruiterId;
@@ -73,7 +88,7 @@ async function run() {
             res.send(result || {});
         })
 
-        app.post('api/companies', async (req, res) => {
+        app.post('/api/companies', async (req, res) => {
             const company = req.body;
             const newCompany = {
                 ...company,
