@@ -83,6 +83,7 @@ async function run() {
             res.send(result);
         })
 
+
         // application related apis
         app.get('/api/applications', async (req, res) => {
             const query = {};
@@ -107,9 +108,93 @@ async function run() {
             res.send(result);
         })
 
+        // application related apis
+        app.get('/api/applications', async (req, res) => {
+            const query = {};
+            if (req.query.applicantId) {
+                query.applicantId = req.query.applicantId;
+            }
+            if (req.query.jobId) {
+                query.jobId = req.query.jobId;
+            }
+            const cursor = applicationsCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        app.post('/api/applications', async (req, res) => {
+            const application = req.body;
+            const newApplication = {
+                ...application,
+                createdAt: new Date()
+            }
+            const result = await applicationsCollection.insertOne(newApplication);
+            res.send(result);
+        })
+
+
+
         // company related apis
+        // app.get('/api/companies', async (req, res) => {
+        //     const cursor = companyCollection.find().skip(4);
+        //     const result = await cursor.toArray();
+        //     res.send(result);
+        // })
+
+        // inefficient way to join/aggregate collection
         app.get('/api/companies', async (req, res) => {
-            const cursor = companyCollection.find().skip(4);
+            const cursor = companyCollection.find();
+            const companies = await cursor.toArray();
+
+            for (const company of companies) {
+                const filter = {
+                    companyId: company._id.toString()
+                }
+                const jobCount = await jobCollection.countDocuments(filter)
+                company.jobCount = jobCount
+            }
+
+            res.send(companies);
+        })
+        // inefficient way to join/aggregate collection
+        app.get('/api/companies2', async (req, res) => {
+            const pipeline = [
+                {
+                    $skip: 5
+                },
+                {
+                    $limit: 2
+                }
+            ];
+
+            const cursor = companyCollection.aggregate(pipeline);
+            const result = await cursor.toArray();
+            res.send(result)
+        })
+
+        app.get('/api/stats', async (req, res) => {
+            const pipeline = [
+                {
+                    $group: {
+                        _id: '$jobType',
+                        count: {
+                            $sum: 1
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        jobType: '$_id',
+                        _id: 0,
+                        count: 1
+                    }
+                },
+                {
+                    $sort: { count: 1 }
+                }
+            ]
+
+            const cursor = jobCollection.aggregate(pipeline);
             const result = await cursor.toArray();
             res.send(result);
         })
@@ -134,6 +219,7 @@ async function run() {
             const result = await companyCollection.insertOne(newCompany);
             res.send(result);
         })
+
 
         app.patch('/api/companies/:id', async (req, res) => {
             const id = req.params.id;
