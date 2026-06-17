@@ -42,9 +42,7 @@ async function run() {
         const applicationsCollection = database.collection("applications");
         const planCollection = database.collection("plans");
         const subscriptionCollection = database.collection("subscriptions");
-
-
-          const sessionCollection = database.collection('session');
+         const sessionCollection = database.collection('session');
 
 
         // verification related
@@ -64,7 +62,7 @@ async function run() {
             const query = { token: token }
             const session = await sessionCollection.findOne(query);
 
-              if (!session) {
+            if (!session) {
                 return res.status(401).send({ message: 'unauthorized access' })
             }
 
@@ -76,7 +74,7 @@ async function run() {
             }
 
             const user = await usersCollection.findOne(userQuery);
-              if (!user) {
+            if (!user) {
                 return res.status(401).send({ message: 'unauthorized access' })
             }
             // set data in the req object
